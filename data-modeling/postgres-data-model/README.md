@@ -179,3 +179,101 @@ jupyter notebook
 
 ## Example Analytic Outputs
 
+To check the schema design and etl process fit the requirements the following checks were run.
+
+### Top 10 locations where songs are listened to
+
+``` sql
+SELECT location, count(*)
+FROM songplays 
+GROUP BY location ORDER BY 2 DESC LIMIT 10
+```
+
+|location                               |count|
+|---------------------------------------|-----|
+|San Francisco-Oakland-Hayward, CA      |691|
+|Portland-South Portland, ME            |665|
+|Lansing-East Lansing, MI               |557|
+|Chicago-Naperville-Elgin, IL-IN-WI     |475|
+|Atlanta-Sandy Springs-Roswell, GA      |456|
+|Waterloo-Cedar Falls, IA               |397|
+|Lake Havasu City-Kingman, AZ           |321|
+|Tampa-St. Petersburg-Clearwater, FL    |307|
+|San Jose-Sunnyvale-Santa Clara, CA     |292|
+|Sacramento--Roseville--Arden-Arcade, CA|270|
+
+### Top 10 agents used to listen
+
+``` sql
+SELECT user_agent, count(*)
+FROM songplays
+GROUP BY user_agent ORDER BY 2 DESC LIMIT 10
+```
+
+|agent                                                                                                                                    |count|
+|-----------------------------------------------------------------------------------------------------------------------------------------|-----|
+|"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36"               |971|
+|"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.78.2 (KHTML, like Gecko) Version/7.0.6 Safari/537.78.2"                  |708|
+|Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0                                                                        |696|
+|"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/36.0.1985.125 Chrome/36.0.1985.125 Safari/537.36"|577|
+|"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.94 Safari/537.36"                               |573|
+|Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:31.0) Gecko/20100101 Firefox/31.0                                                        |443|
+|"Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36"                          |427|
+|"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"                          |419|
+|"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.77.4 (KHTML, like Gecko) Version/7.0.5 Safari/537.77.4"                  |319|
+|Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20100101 Firefox/31.0                                                                 |310|
+
+### Top 10 users
+
+``` sql
+SELECT first_name || ' , ' || last_name AS name, count(*)
+FROM songplays
+JOIN users on songplays.user_id = users.user_id
+GROUP BY first_name || ' , ' || last_name ORDER BY 2 DESC LIMIT 10
+```
+
+|name	             |count|
+|--------------------|-----|
+|Chloe , Cuevas      |689|
+|Tegan , Levine      |665|
+|Kate , Harrell      |557|
+|Lily , Koch         |463|
+|Aleena , Kirby      |397|
+|Jacqueline , Lynch  |346|
+|Layla , Griffin     |321|
+|Jacob , Klein       |289|
+|Mohammad , Rodriguez|270|
+|Matthew , Jones     |248|
+
+
+### Top 10 Users and songs listened to
+
+``` sql
+SELECT first_name || ' , ' || last_name AS name,
+songs.title, count(*)
+FROM songplays
+JOIN users on songplays.user_id = users.user_id
+LEFT OUTER JOIN songs on songplays.song_id = songs.song_id
+GROUP BY first_name || ' , ' || last_name, songs.title ORDER BY 3 DESC LIMIT 10
+```
+
+|name                |title|count|
+|--------------------|-----|-----|
+|Chloe , Cuevas      |None|689|
+|Tegan , Levine      |None|665|
+|Kate , Harrell      |None|557|
+|Lily , Koch         |None|462|
+|Aleena , Kirby      |None|397|
+|Jacqueline , Lynch  |None|346|
+|Layla , Griffin     |None|321|
+|Jacob , Klein       |None|289|
+|Mohammad , Rodriguez|None|270|
+|Matthew , Jones     |None|248|
+
+## Conclusion
+
+The main requirement of this analysis from Sparkify was to gain insight into:
+
+*"The analytics team is particularly interested in understanding what songs users are listening to"*
+
+The top 10 users and songs analysis shows that without more songs in the song metadata database it's not possible to fulfill this requirement.
