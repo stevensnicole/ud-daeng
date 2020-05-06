@@ -9,29 +9,29 @@ time_table_drop = "DROP TABLE IF EXISTS time;"
 # CREATE TABLES
 
 songplay_table_create = ("""CREATE TABLE IF NOT EXISTS songplays ( 
-                            songplay_id SERIAL PRIMARY KEY, 
-                            start_time timestamp, 
-                            user_id int, 
-                            level text, 
+                            songplay_id SERIAL PRIMARY KEY NOT NULL, 
+                            start_time timestamp NOT NULL, 
+                            user_id int NOT NULL, 
+                            level text NOT NULL, 
                             song_id text, 
                             artist_id text, 
-                            session_id int, 
-                            location text, 
-                            user_agent text
+                            session_id int NOT NULL, 
+                            location text NOT NULL, 
+                            user_agent text NOT NULL
                             ); 
                         """)
 
 user_table_create = ("""CREATE TABLE IF NOT EXISTS users ( 
-                        user_id int PRIMARY KEY, 
-                        first_name text, 
-                        last_name text, 
-                        gender text, 
-                        level text
+                        user_id int PRIMARY KEY NOT NULL, 
+                        first_name text NOT NULL, 
+                        last_name text NOT NULL, 
+                        gender text NOT NULL, 
+                        level text NOT NULL
                         ); 
                     """)
 
 song_table_create = ("""CREATE TABLE IF NOT EXISTS songs ( 
-                        song_id text PRIMARY KEY, 
+                        song_id text PRIMARY KEY NOT NULL,  
                         title text, 
                         artist_id text, 
                         year int, 
@@ -40,22 +40,22 @@ song_table_create = ("""CREATE TABLE IF NOT EXISTS songs (
                     """)
 
 artist_table_create = ("""CREATE TABLE IF NOT EXISTS artists ( 
-                            artist_id text PRIMARY KEY, 
-                            name text, 
-                            location text, 
-                            latitude float, 
-                            longitude float
+                            artist_id text PRIMARY KEY NOT NULL,  
+                            name text NOT NULL, 
+                            location text NOT NULL, 
+                            latitude float NOT NULL, 
+                            longitude float NOT NULL
                             ); 
                     """)
 
 time_table_create = ("""CREATE TABLE IF NOT EXISTS time (
-                        start_time timestamp PRIMARY KEY, 
-                        hour int, 
-                        day int, 
-                        week int, 
-                        month int, 
-                        year int, 
-                        weekday int
+                        start_time timestamp PRIMARY KEY NOT NULL,  
+                        hour int NOT NULL, 
+                        day int NOT NULL, 
+                        week int NOT NULL, 
+                        month int NOT NULL, 
+                        year int NOT NULL, 
+                        weekday int NOT NULL
                         ); 
                     """)
 
@@ -81,7 +81,7 @@ user_table_insert = ("""INSERT INTO users (
                         level)
                         VALUES (%s, %s, %s, %s, %s)
                         ON CONFLICT (user_id)
-                        DO NOTHING;
+                        DO UPDATE SET level = EXCLUDED.level;
                     """)
 
 song_table_insert = ("""INSERT INTO songs ( 
