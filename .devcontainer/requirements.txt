@@ -2,7 +2,6 @@
 boto3
 botocore
 pandas
-sql_queries
 psycopg2
 
 ###### Requirements with Version Specifiers ######`
