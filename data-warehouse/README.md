@@ -131,6 +131,10 @@ The log data associated with song plays i.e. records with `page` from the log fi
 
 ### Dimension tables
 
+Distribuition key - Rows having similar values are placed in the same slice.
+Distribution style - distributing both facts and dimensions on the joining KEYs eliminates shuffling
+sorting key - used for columns that are used frequently in sorting like the date dimension and it's corresponding foreign key in the fact table. It maximises the query time since each node already has contiguous ranges of rows based on the sorting key.
+
 #### Users
 
 Users taken from the log files with a unique row for each user.
