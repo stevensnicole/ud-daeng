@@ -96,6 +96,7 @@ The metadata associated with songs.
 | title    | numeric |
 | duration  | text variable unlimited length |
 | year  | integer |
+
 ## Analytics Schema
 
 The analytics schema will be optimized for analysis of song plays, with the business data being stored in a fact table of songplays. The attributes for the song play data, artists, users, songs and time will be stored in dimension tables. Dimension tables contain descriptive information about the data in the fact table. This design is called a star schema, star schema's have the following characteristics:
@@ -110,23 +111,27 @@ The analytics schema will be optimized for analysis of song plays, with the busi
 
 These two characteristics lend themselves well to the requirement, which is why they have been chosen.
 
+Distribution of the data throughout the cluster nodes will be taken into consideration dependant on the type of data within the table and whether a field is used for joins.  
+
+No specific requirement for reporting has been given, therefore the sorting requirements of the data is difficult to predict. Example sort keys have been given with respect to the example SQL queries at the end of this file.
+
 ### Fact table
 
 #### Songplays
 
-The log data associated with song plays i.e. records with `page` from the log file JSON set to `NextSong`.
+The log data associated with song plays i.e. records with `page` from the log file JSON set to `NextSong`. This table is most likely to be joined to the dimenaion table "songs" therefore a distribution key has been added to the join column song_id. After songs, the most likely table to be used and sorted by is time joiend to start_time, so a sortkey has been added to this column.
 
-|   Column    |               Type             | PK |
-| ----------- | ------------------------------ | -- |
-| songplay_id | integer                        | Y  |
-| start_time  | timestamp without time zone    |    |
-| user_id     | integer                        |    |
-| level       | text variable unlimited length |    |
-| song_id     | text variable unlimited length |    |
-| artist_id   | text variable unlimited length |    |
-| session_id  | integer                        |    |
-| location    | text variable unlimited length |    |
-| user_agent  | text variable unlimited length |    |
+|   Column    |               Type             | PK | DISTKEY | SORTKEY |
+| ----------- | ------------------------------ | -- | ------- | ------- |
+| songplay_id | integer                        | Y  |         |         |
+| start_time  | timestamp without time zone    |    |         |    Y    |
+| user_id     | integer                        |    |         |         |
+| level       | text variable unlimited length |    |         |         |
+| song_id     | text variable unlimited length |    |    Y    |    Y    |
+| artist_id   | text variable unlimited length |    |         |         |
+| session_id  | integer                        |    |         |         |
+| location    | text variable unlimited length |    |         |         |
+| user_agent  | text variable unlimited length |    |         |         |
 
 
 ### Dimension tables
@@ -137,54 +142,59 @@ sorting key - used for columns that are used frequently in sorting like the date
 
 #### Users
 
-Users taken from the log files with a unique row for each user.
+Users taken from the log files with a unique row for each user. The Log files contain the user information and will be duplicated for every songplay and login. Therefore when a new user is added from a log file, the most recent entry by timestamp contains the user's current setup. The ETL process must take this into account as distinct cannot be used due to a duplication when a user switches from free to paid or vice versa.
 
-|   Column   |              Type              | PK |
-| ---------- | ------------------------------ | -- |
-| user_id    | integer                        | Y  |
-| first_name | text variable unlimited length |    |
-| last_name  | text variable unlimited length |    |
-| gender     | text variable unlimited length |    |
-| level      | text variable unlimited length |    |
+This table is likely to be fairly small and can be distributed across all nodes for query performance using a distribution style of all.
+
+|   Column   |              Type              | PK | DISTKEY | SORTKEY |
+| ---------- | ------------------------------ | -- | ------- | ------- |
+| user_id    | integer                        | Y  |         |         |
+| first_name | text variable unlimited length |    |         |         |
+| last_name  | text variable unlimited length |    |         |         |
+| gender     | text variable unlimited length |    |         |         |
+| level      | text variable unlimited length |    |         |         |
 
 #### Songs
 
-Songs from the song metadata files.
+Songs from the song metadata files, it is likely that data from this table could be sorted by title or year, therefore sortkeys have been added to these fields.
 
-|  Column   |               Type             | PK |
-| --------- | ------------------------------ | -- |
-| song_id   | text variable unlimited length | Y  |
-| title     | text variable unlimited length |    |
-| artist_id | text variable unlimited length |    |
-| year      | integer                        |    |
-| duration  | float                          |    |
+|  Column   |               Type             | PK | DISTKEY | SORTKEY |
+| --------- | ------------------------------ | -- | ------- | ------- |
+| song_id   | text variable unlimited length | Y  |    Y    |         |
+| title     | text variable unlimited length |    |         |    Y    |
+| artist_id | text variable unlimited length |    |         |         |
+| year      | integer                        |    |         |    Y    |
+| duration  | float                          |    |         |         |
 
 #### Artists
 
-Unique artists loaded from the song metadata files.
+Unique artists loaded from the song metadata files, sorted by the join key of artist_id and then the name, which is likely to be an order by for searching.
 
-|  Column   |               Type             | PK |
-| --------- | ------------------------------ | -- |
-| artist_id | text variable unlimited length | Y  |
-| name      | text variable unlimited length |    |
-| location  | text variable unlimited length |    |
-| latitude  | float                          |    |
-| longitude | float                          |    |
+This table is likely to be fairly small and can be distributed across all nodes for query performance using a distribution style of all.
 
+|  Column   |               Type             | PK | DISTKEY | SORTKEY |
+| --------- | ------------------------------ | -- | ------- | ------- |
+| artist_id | text variable unlimited length | Y  |         |    Y    |
+| name      | text variable unlimited length |    |         |    Y    |
+| location  | text variable unlimited length |    |         |         |
+| latitude  | float                          |    |         |         |
+| longitude | float                          |    |         |         |
+
+This table is likely to be fairly small and can be distributed across all nodes for query performance using a distribution style of all.
 
 #### Time
 
-Timestamps of records in songplays broken down into units ready for analysis, makes it easy to group by items such as year.
+Timestamps of records in songplays broken down into units ready for analysis, makes it easy to group by items such as year. Ordered by it's join key of start_time as song plays are likely to be ordered by time.
 
-|   Column   |            Type             | PK |
-| ---------- | --------------------------- | -- |
-| start_time | timestamp without time zone | Y  |
-| hour       | integer                     |    |
-| day        | integer                     |    |
-| week       | integer                     |    |
-| month      | integer                     |    |
-| year       | integer                     |    |
-| weekday    | integer                     |    |
+|   Column   |            Type             | PK | DISTKEY | SORTKEY |
+| ---------- | --------------------------- | -- | ------- | ------- |
+| start_time | timestamp without time zone | Y  |         |    Y    |
+| hour       | integer                     |    |         |         |
+| day        | integer                     |    |         |         |
+| week       | integer                     |    |         |         |
+| month      | integer                     |    |         |         |
+| year       | integer                     |    |         |         |
+| weekday    | integer                     |    |         |         |
 
 ## File listing and execution
 
@@ -198,8 +208,61 @@ Timestamps of records in songplays broken down into units ready for analysis, ma
 
 * dwh.cfg - setup values for the redshift instance.
 
+* amzn-keys.cfg - key and secret for AWS, added to .gitignore so it is not commited to project.
+
 * create_tables.py - Python file which creates sparkifydb, drops all the tables if they exist, then loads creates the schema.
 
 * etl.py - Python script to extract data from the .json files, load it into the redshift database staging tables then transform it into the dimension and fact tables.
 
 * sql_queries.py - Python file to build the drop, create, insert and select statements executed by create_tables.py and etl.py.
+
+### Execution
+
+1. create_redshift.py - creates the Redshift cluster and grants it permission to read from S3. Adds the cluster details to dwh.cfg
+
+2. create_tables.py - creates the staging tables and star schema
+
+3. etl.py - extracts the data from the S3 buckets into the staging table then trasnforms the raw staging table data into the star schema
+
+4. drop_redshift.py - clean up process to drop the Redshift cluster and remove the cluster details from dwh.cfg
+
+## Example queries
+
+There are alot of rows in this data set which makes it difficult to get a good grasp of the kind of queries that would be helpful to the business.  Here are some example "top" queries where the top 10 are displayed.
+
+### Top browsers
+
+```sql
+select top 10 user_agent, count(user_agent) from songplays
+group by user_agent
+order by count(user_agent) desc;
+```
+
+### Month when website most used
+This would normally be used to help spot trends but there's only one month of data.
+
+```sql
+select month, count(month) from time
+join songplays on time.start_time = songplays.start_time
+group by month
+order by count(month) desc;
+```
+
+### Most played artists
+
+```sql
+select top 10 name, count(name) from artists
+join songplays on artists.artist_id = songplays.artist_id
+group by name
+order by count(name) desc;
+```
+
+
+### Most active users
+```sql
+select top 10 last_name || ',' || first_name as "User Name", count(last_name || ',' || first_name) from users
+join songplays on users.user_id = songplays.user_id
+group by last_name || ',' || first_name
+order by count(last_name || ',' || first_name) desc;
+```
+

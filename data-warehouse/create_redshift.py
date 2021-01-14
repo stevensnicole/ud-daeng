@@ -15,6 +15,7 @@ config.read_file(open('dwh.cfg'))
 secret_config = configparser.ConfigParser()
 secret_config.read_file(open('amzn-keys.cfg'))
 
+#Set the config and secrets file values into variables
 KEY                    = secret_config.get('SECRETS','AMZN_KEY')
 SECRET                 = secret_config.get('SECRETS','AMZN_SECRET')
 

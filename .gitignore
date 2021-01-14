@@ -4,8 +4,11 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+*.pyc
 
 # Local History for Visual Studio Code
 .history/
 
+#Amazon secrets file
 */amzn-keys.cfg
+

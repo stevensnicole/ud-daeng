@@ -1,2 +1,14 @@
 {
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "dwhcluster.cfouudwueokx.us-west-2.redshift.amazonaws.com",
+            "port": 5439,
+            "askForPassword": true,
+            "driver": "AWS Redshift",
+            "name": "udacity-dw",
+            "database": "dwh",
+            "username": "dwhuser"
+        }
+    ]
 }
